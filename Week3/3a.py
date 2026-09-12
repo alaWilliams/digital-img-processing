@@ -18,6 +18,15 @@ new_h = old_h + pad * 2
 new_w = old_w + pad * 2
 
 new_pixels = np.zeros((new_h, new_w, channels), dtype=pixels.dtype)
+new_pixels[pad:pad+old_h, pad:pad+old_w] = pixels
 
-print(pixels.shape)
-print(new_pixels.shape)
+# print(pixels.shape)
+# print(new_pixels.shape)
+
+# print(new_pixels)
+
+top_row = pixels[0, :, :]
+
+print(top_row)
+
+print(pixels)
