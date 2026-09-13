@@ -8,9 +8,6 @@ np.set_printoptions(linewidth=200)
 
 
 
-pixels = np.random.randint(0, 256, size=(5, 5, 3), dtype='uint8')
-
-
 def expand_image(pixels, pad):
 
   old_h, old_w, channels = pixels.shape 
@@ -50,10 +47,11 @@ def expand_image(pixels, pad):
 
   return new_pixels
 
-expanded = expand_image(pixels, pad=2)
+if __name__ == "__main__":
+    pixels = np.random.randint(0, 256, size=(5, 5, 3), dtype='uint8')
+    expanded = expand_image(pixels, pad=2)
 
-
-print("Original:")
-print(pixels)
-print("\nExpanded:")
-print(expanded)
+    print("Original:")
+    print(pixels)
+    print("\nExpanded:")
+    print(expanded)
