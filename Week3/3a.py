@@ -4,6 +4,9 @@
 
 import numpy as np
 
+np.set_printoptions(linewidth=200)
+
+
 
 pixels = np.random.randint(0, 256, size=(5, 5, 3), dtype='uint8')
 
@@ -48,6 +51,7 @@ def expand_image(pixels, pad):
   return new_pixels
 
 expanded = expand_image(pixels, pad=2)
+
 
 print("Original:")
 print(pixels)

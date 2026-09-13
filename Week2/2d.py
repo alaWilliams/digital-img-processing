@@ -1,9 +1,6 @@
 # 2d) Cumulative density function
-
 # Implement a function that converts histogram into a cumulative densify function (CDF). 
-
 # Attach the function into your report.
-
 # Plot histogram, CDF and the picture flower.jpg, and attach them into your report.
 
 from PIL import Image
