@@ -1,5 +1,6 @@
 import numpy as np
 from PIL import Image
+import os
 
 picture = Image.open("photo.bmp")
 img = np.array(picture)
@@ -50,13 +51,13 @@ def quantize(coeffs, Q):
   return result
 
 coeffs = dct2(shifted)
-q = quantize(coeffs, 16)
+quantized= quantize(coeffs, 16)
 # print(q)
 d=3
 def diagonal(d, n):
   cells = []
-  for r in range(4):
-      if d-r >= 0 and d-r <= 3:
+  for r in range(n):
+      if d-r >= 0 and d-r <= n-1:
         cells.append((r, d-r))
   if d % 2 == 0:
     cells.reverse()
@@ -76,4 +77,54 @@ def zigzag(block):
         values.append(block[r][c])
     return np.array(values)
 
-print(zigzag(q)[:10])
+def rle_encode(values):
+    out = []
+    zeros = 0
+    for v in values:
+        if v == 0:
+            zeros += 1
+        else:
+            if zeros > 0:
+                out.extend([0, zeros])
+                zeros = 0
+            out.append(int(v))
+    if zeros > 0:
+        out.extend([0, zeros])
+    return out
+
+encoded = rle_encode(zigzag(quantized))
+
+N=8
+def compress(img, Q):
+  h, w = img.shape
+  shifted = img.astype(np.float64) - 128                      
+  stream = []
+  for by in range(0, h, N): 
+    for bx in range(0, w, N):
+      block = shifted[by:by + N, bx:bx + N]
+      coeffs = dct2(block)                                
+      q = np.round(coeffs / Q)                           
+      q = np.clip(q, -128, 127).astype(np.int8)
+      stream.extend(rle_encode(zigzag(q))) 
+  return np.array(stream, dtype=np.int8)
+
+compressed = compress(img, 16)
+print(len(compressed))
+
+compressed.tofile("compressed.bin")
+from_file = np.fromfile("compressed.bin", dtype=np.int8)
+
+def rle_decode_block(data, pos):
+   coeffs = []
+   while len(coeffs) < 64:
+      v = int(data[pos])
+      pos += 1
+      if v == 0:
+        run = int(data[pos])
+        pos += 1
+        coeffs.extend([0] * run)
+      else:
+        coeffs.append(v)
+    return np.array(coeffs, dtype=np.int16), pos
+
+
