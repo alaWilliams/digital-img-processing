@@ -14,7 +14,7 @@ for y in range(0, 640, 8):
     block = img[y:y+8, x:x+8]
     counter += 1
 
-print(counter)
+# print(counter)
 
 block =img[0:8, 0:8]
 # print(block.min())
@@ -46,10 +46,34 @@ test = np.full((8, 8), 10.0)
 
 def quantize(coeffs, Q):
   result = np.round(coeffs / Q)
-  result = np.clip(result, -128, 127)
-  result = result.astype(np.int8)
+  result = np.clip(result, -128, 127).astype(np.int8)
   return result
 
 coeffs = dct2(shifted)
 q = quantize(coeffs, 16)
-print(q)
+# print(q)
+d=3
+def diagonal(d, n):
+  cells = []
+  for r in range(4):
+      if d-r >= 0 and d-r <= 3:
+        cells.append((r, d-r))
+  if d % 2 == 0:
+    cells.reverse()
+  return cells
+
+def zigzag_order(n):
+    order = []
+    for d in range(2 * n - 1):
+        order.extend(diagonal(d, n))
+    return order
+
+order = zigzag_order(8)
+
+def zigzag(block):
+    values = []
+    for r, c in order:
+        values.append(block[r][c])
+    return np.array(values)
+
+print(zigzag(q)[:10])
