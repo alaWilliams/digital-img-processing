@@ -17,11 +17,11 @@ for y in range(0, 640, 8):
 print(counter)
 
 block =img[0:8, 0:8]
-print(block.min())
-print(block.max())
+# print(block.min())
+# print(block.max())
 shifted = block.astype(np.float64) - 128
-print(shifted.min())
-print(shifted.max())
+# print(shifted.min())
+# print(shifted.max())
 
 def dct_matrix(n):
   matrix = np.zeros((n, n))
@@ -33,5 +33,23 @@ def dct_matrix(n):
         matrix[u][x] = np.sqrt(2/n) * np.cos((2*x + 1) * u * np.pi / (2*n))        
   return matrix
 
-print(dct_matrix(2))
+# print(dct_matrix(2))
 
+C = dct_matrix(8)
+
+def dct2(block):
+  return C @ block @ C.T
+
+test = np.full((8, 8), 10.0)
+
+# print(np.round(dct2(test), 2))
+
+def quantize(coeffs, Q):
+  result = np.round(coeffs / Q)
+  result = np.clip(result, -128, 127)
+  result = result.astype(np.int8)
+  return result
+
+coeffs = dct2(shifted)
+q = quantize(coeffs, 16)
+print(q)
