@@ -37,6 +37,7 @@ def dct_matrix(n):
 # print(dct_matrix(2))
 
 C = dct_matrix(8)
+N=8
 
 def dct2(block):
   return C @ block @ C.T
@@ -69,7 +70,7 @@ def zigzag_order(n):
         order.extend(diagonal(d, n))
     return order
 
-order = zigzag_order(8)
+order = zigzag_order(N)
 
 def zigzag(block):
     values = []
@@ -94,7 +95,6 @@ def rle_encode(values):
 
 encoded = rle_encode(zigzag(quantized))
 
-N=8
 def compress(img, Q):
   h, w = img.shape
   shifted = img.astype(np.float64) - 128                      
@@ -109,14 +109,14 @@ def compress(img, Q):
   return np.array(stream, dtype=np.int8)
 
 compressed = compress(img, 16)
-print(len(compressed))
+# print(len(compressed))
 
 compressed.tofile("compressed.bin")
 from_file = np.fromfile("compressed.bin", dtype=np.int8)
 
 def rle_decode_block(data, pos):
-   coeffs = []
-   while len(coeffs) < 64:
+  coeffs = []
+  while len(coeffs) < 64:
       v = int(data[pos])
       pos += 1
       if v == 0:
@@ -125,6 +125,32 @@ def rle_decode_block(data, pos):
         coeffs.extend([0] * run)
       else:
         coeffs.append(v)
-    return np.array(coeffs, dtype=np.int16), pos
+  return np.array(coeffs, dtype=np.int16), pos
+
+def inverse_zigzag(vec):
+    block = np.zeros((N, N))
+    for i, (r, c) in enumerate(order):
+        block[r][c] = vec[i]
+    return block
+
+def inverse_dct2(block):
+   return C.T @ block @ C
+
+back = inverse_dct2(dct2(shifted))
+print(np.allclose(back, shifted))
+
+def decode_block(data, pos, Q):
+  coeffs, pos = rle_decode_block(data, pos)
+  quantized = inverse_zigzag(coeffs)
+  dct_block = quantized * Q
+  block = inverse_dct2(dct_block) + 128
+  block = np.clip(np.round(block), 0, 255).astype(np.uint8)
+  return block, pos
 
 
+data = np.array(rle_encode(zigzag(quantized)), dtype=np.int8)
+rec, pos = decode_block(data, 0, 16)
+orig = img[0:8, 0:8]
+print(np.abs(rec.astype(int) - orig.astype(int)).max())
+print(pos)
+print(len(data))
