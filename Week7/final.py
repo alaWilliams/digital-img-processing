@@ -154,3 +154,32 @@ orig = img[0:8, 0:8]
 print(np.abs(rec.astype(int) - orig.astype(int)).max())
 print(pos)
 print(len(data))
+
+def decompress(data, Q, h=640, w=640,):
+  rec = np.zeros((h, w))
+  pos = 0
+  for by in range(0, h, N):
+    for bx in range(0, w, N):
+      coeffs, pos = rle_decode_block(data, pos)           
+      q = inverse_zigzag(coeffs).astype(np.float64)       
+      dct_block = q * Q                                    
+      block = inverse_dct2(dct_block)                             
+      rec[by:by + N, bx:bx + N] = block + 128              
+  return np.clip(np.round(rec), 0, 255).astype(np.uint8)       
+
+from_file = np.fromfile("compressed.bin", dtype=np.int8)
+rec = decompress(from_file, 16)
+print(rec.shape, rec.dtype)
+Image.fromarray(rec).save("reconstructed_Q16.bmp")
+
+for Q in (16, 32, 64, 128):
+  compressed = compress(img, Q)
+  filename = f"compressed_Q{Q}.bin"
+  compressed.tofile(filename)                                
+  from_file = np.fromfile(filename, dtype=np.int8)            
+  assert np.array_equal(compressed, from_file)
+  rec = decompress(from_file, Q=Q)                         # i)
+  Image.fromarray(rec).save(f"reconstructed_Q{Q}.bmp")
+  size = os.path.getsize(filename)
+  original_bytes = img.size
+  print(f"{Q:>4} {size:>17} {original_bytes / size:>8.2f}")
